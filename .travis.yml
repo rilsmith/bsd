@@ -4,8 +4,9 @@ python:
 
 before_install:
   - git clone -b development https://github.com/clips/pattern.git
-  - cd pattern
+  - pushd pattern
   - python setup.py install
+  - popd
 
 # command to install dependencies
 install:
