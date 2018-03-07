@@ -22,7 +22,7 @@ print(find_packages('bsdetector'))
 setup(name=package,
       version=version,
       # packages=['bsdetector', 'lexicons', 'additional_resources'],
-      packages=['bsdetector', 'ref_lexicons', 'additional_resources'],
+      packages=['bsdetector'],
       install_requires=reqs,
       package_dir={'bsdetector': 'bsdetector'},
       package_data={'bsdetector': ['*.json']},
