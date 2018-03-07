@@ -2,6 +2,11 @@ language: python
 python:
   - "3.6"
 
+before_install:
+  - git clone -b development git@github.com:clips/pattern.git
+  - cd pattern
+  - python setup.py install
+
 # command to install dependencies
 install:
   - pip install .
