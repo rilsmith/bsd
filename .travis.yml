@@ -3,7 +3,7 @@ python:
   - "3.6"
 
 before_install:
-  - git clone -b development git@github.com:clips/pattern.git
+  - git clone -b development https://github.com/clips/pattern.git
   - cd pattern
   - python setup.py install
 
