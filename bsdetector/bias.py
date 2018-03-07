@@ -8,7 +8,7 @@ import os
 import sys
 from contextlib import contextmanager
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as Vader
-from pattern3.text.en import Sentence, parse, modality
+from pattern.text.en import Sentence, parse, modality
 
 """
 Created on June 04, 2015

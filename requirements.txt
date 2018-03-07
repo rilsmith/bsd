@@ -1,7 +1,6 @@
 decorators
 flask
 nltk
-pattern3
 requests
 pip
 pytest
