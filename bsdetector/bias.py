@@ -1,20 +1,19 @@
 #!/usr/bin/python
 # coding: utf-8
-"""
-Created on June 04, 2015
-@author: C.J. Hutto
-"""
-from __future__ import print_function
+from collections import OrderedDict
+from decorators import *
 import json
 import multiprocessing
 import os
 import sys
-import re
-
-from collections import OrderedDict
-from decorator import contextmanager
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as vader_sentiment
+from contextlib import contextmanager
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer as Vader
 from pattern.text.en import Sentence, parse, modality
+
+"""
+Created on June 04, 2015
+@author: C.J. Hutto
+"""
 
 
 class Lexicons(object):
@@ -125,21 +124,21 @@ def syllable_count(text):
         return count
 
 
-def lexicon_count(text, removepunct=True):
+def lexicon_count(text, remove_punct=True):
     exclude = '!"#$%&\'()*+,-./:;<=>?@[\]^_`{|}~'
-    if removepunct:
+    if remove_punct:
         text = ''.join(ch for ch in text if ch not in exclude)
     count = len(text.split())
     return count
 
 
 def sentence_count(text):
-    ignoreCount = 0
+    ignore_count = 0
     sentences = split_into_sentences(text)
     for sentence in sentences:
         if lexicon_count(sentence) <= 2:
-            ignoreCount = ignoreCount + 1
-    sentence_cnt = len(sentences) - ignoreCount
+            ignore_count = ignore_count + 1
+    sentence_cnt = len(sentences) - ignore_count
     if sentence_cnt < 1:
         sentence_cnt = 1
     return sentence_cnt
@@ -148,26 +147,25 @@ def sentence_count(text):
 def avg_sentence_length(text):
     lc = lexicon_count(text)
     sc = sentence_count(text)
-    ASL = float(lc / sc)
-    return round(ASL, 1)
+    asl = float(lc / sc)
+    return round(asl, 1)
 
 
 def avg_syllables_per_word(text):
     syllable = syllable_count(text)
     words = lexicon_count(text)
     try:
-        ASPW = float(syllable) / float(words)
-        return round(ASPW, 1)
+        aspw = float(syllable) / float(words)
+        return round(aspw, 1)
     except ZeroDivisionError:
-        # print "Error(ASyPW): Number of words are zero, cannot divide"
         return 1
 
 
 def flesch_kincaid_grade(text):
-    ASL = avg_sentence_length(text)
-    ASW = avg_syllables_per_word(text)
-    FKRA = float(0.39 * ASL) + float(11.8 * ASW) - 15.59
-    return round(FKRA, 1)
+    asl = avg_sentence_length(text)
+    asw = avg_syllables_per_word(text)
+    fkra = float(0.39 * asl) + float(11.8 * asw) - 15.59
+    return round(fkra, 1)
 
 
 def count_feature_list_freq(feat_list, words, bigrams, trigrams):
@@ -248,60 +246,57 @@ def check_quotes(text):
 
 ref_lexicons = Lexicons()
 
-##### List of presupposition verbs (comprised of Factive & Implicative verbs):
-### Factive verbs derived from:
+# List of presupposition verbs (comprised of Factive & Implicative verbs):
+
+# Factive verbs derived from:
 # Joan B. Hooper. 1975. On assertive predicates. In J. Kimball, editor,
 # Syntax and Semantics, volume 4, pages 91–124. Academic Press, New York.
-### Implicative verbs derived from
+
+# Implicative verbs derived from
 # Lauri Karttunen. 1971. Implicative verbs. Language, 47(2):340–358.
-#########################################################################
 presup = ref_lexicons.list('ref_presup_verbs')
 
-##### List of coherence markers derived from:
+
+# List of coherence markers derived from:
 # Knott, Alistair. 1996. A Data-Driven Methodology for Motivating a Set of
 # Coherence Relations. Ph.D. dissertation, University of Edinburgh, UK.
-#########################################################################
 coherence = ref_lexicons.list('ref_coherence_markers')
 
-##### List of assertive derived from:
+# List of assertive derived from:
 # Joan B. Hooper. 1975. On assertive predicates. In J. Kimball, editor,
 # Syntax and Semantics, volume 4, pages 91–124. Academic Press, New York.
-#########################################################################
 assertives = ref_lexicons.list('ref_assertive_verbs')
 
-##### List of degree modifiers derived from:
+# List of degree modifiers derived from:
 # Hutto, C.J. & Gilbert, E.E. (2014). VADER: A Parsimonious Rule-based Model for
 #  Sentiment Analysis of Social Media Text. Eighth International Conference on
 #  Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014.
-#########################################################################
 modifiers = ref_lexicons.list('ref_degree_modifiers')
 
-##### List of hedge words derived from:
+# List of hedge words derived from:
 # Ken Hyland. 2005. Metadiscourse: Exploring Interaction in Writing.
 # Continuum, London and New York.
-#########################################################################
 hedges = ref_lexicons.list('ref_hedge_words')
 
-##### List of bias words derived from:
+# List of bias words derived from:
 # Marta Recasens, Cristian Danescu-Niculescu-Mizil, and Dan
 # Jurafsky. 2013. Linguistic Models for Analyzing and Detecting Biased
 # Language. Proceedings of ACL 2013.
-#########################################################################
 partisan = ref_lexicons.list('ref_partisan_words')
 
-##### List of opinion laden words extracted from:
+# List of opinion laden words extracted from:
 # Hutto, C.J. & Gilbert, E.E. (2014). VADER: A Parsimonious Rule-based Model for
 #  Sentiment Analysis of Social Media Text. Eighth International Conference on
 #  Weblogs and Social Media (ICWSM-14). Ann Arbor, MI, June 2014.
-##### List of strong/weak subjective words extracted from:
+
+# List of strong/weak subjective words extracted from:
 # Theresa Wilson, Janyce Wiebe and Paul Hoffmann (2005). Recognizing Contextual
 # Polarity in Phrase-Level Sentiment Analysis. Proceedings of HLT/EMNLP 2005,
 # Vancouver, Canada.
-#########################################################################
 value_laden = ref_lexicons.list('ref_value_laden')
-vader_sentiment_analysis = vader_sentiment()
+Vader_analysis = Vader()
 
-##### List of figurative expressions derived from:
+# List of figurative expressions derived from:
 # English-language idioms
 # https://en.wikipedia.org/wiki/English-language_idioms.
 # and
@@ -310,10 +305,9 @@ vader_sentiment_analysis = vader_sentiment()
 # and
 # List of political metaphors
 # https://en.wikipedia.org/wiki/List_of_political_metaphors
-#########################################################################
 figurative = ref_lexicons.list('ref_figurative')
 
-##### Lists of LIWC category words
+# Lists of LIWC category words
 # liwc 3rd person pronoun count (combines S/he and They)
 liwc_3pp = ref_lexicons.list('ref_liwc_3pp')
 # liwc achievement word count
@@ -330,10 +324,10 @@ liwc_work = ref_lexicons.list('ref_liwc_work')
 
 def extract_bias_features(text):
     features = OrderedDict()
-    text_nohyph = text.replace("-", " ")  # preserve hyphenated words as seperate tokens
-    txt_lwr = str(text_nohyph).lower()
+    text_no_hyphen = text.replace("-", " ")  # preserve hyphenated words as seperate tokens
+    txt_lwr = str(text_no_hyphen).lower()
     words = ''.join(ch for ch in txt_lwr if ch not in '!"#$%&()*+,-./:;<=>?@[\]^_`{|}~').split()
-    unigrams = sorted(list(set(words)))
+    monograms = sorted(list(set(words)))
     bigram_tokens = find_ngrams(words, 2)
     bigrams = [" ".join([w1, w2]) for w1, w2 in sorted(set(bigram_tokens))]
     trigram_tokens = find_ngrams(words, 3)
@@ -343,7 +337,7 @@ def extract_bias_features(text):
     features['word_cnt'] = len(words)
 
     # unique word count
-    features['unique_word_cnt'] = len(unigrams)
+    features['unique_word_cnt'] = len(monograms)
 
     # presupposition verb count
     count = count_feature_list_freq(presup, words, bigrams, trigrams)
@@ -381,8 +375,8 @@ def extract_bias_features(text):
     features['opinion_rto'] = round(float(count) / float(len(words)), 4)
 
     # compound sentiment score using VADER sentiment analysis package
-    compound_sentiment = vader_sentiment_analysis.polarity_scores(text)['compound']
-    features['vader_sentiment'] = compound_sentiment
+    compound_sentiment = Vader_analysis.polarity_scores(text)['compound']
+    features['Vader'] = compound_sentiment
     features['vader_senti_abs'] = abs(compound_sentiment)
 
     # modality (certainty) score and mood using  http://www.clips.ua.ac.be/pages/pattern-en#modality
@@ -435,61 +429,64 @@ def extract_bias_features(text):
     features["mean_nonquote_length"] = quote_dict["mean_nonquote_length"]
     return features
 
-modelbeta = [-0.5581467,
-             0.3477007,
-             -2.0461103,
-             0.5164345,
-             8.3551389,
-             4.5965115,
-             5.737545,
-             -0.953181,
-             9.811681,
-             -16.6359498,
-             3.059548,
-             -3.5770891,
-             5.0959142]
 
-modelkeys = ['vader_sentiment',
-             'opinion_rto',
-             'modality',
-             'liwc_3pp_rto',
-             'liwc_tent_rto',
-             'liwc_achiev_rto',
-             'partisan_rto',
-             'liwc_work_rto',
-             'presup_rto',
-             'hedge_rto',
-             'assertive_rto',
-             'opinion_rto']
+model_beta = [-0.5581467,
+              0.3477007,
+              -2.0461103,
+              0.5164345,
+              8.3551389,
+              4.5965115,
+              5.737545,
+              -0.953181,
+              9.811681,
+              -16.6359498,
+              3.059548,
+              -3.5770891,
+              5.0959142]
 
-def featurevector(features):
+model_keys = ['Vader',
+              'opinion_rto',
+              'modality',
+              'liwc_3pp_rto',
+              'liwc_tent_rto',
+              'liwc_achiev_rto',
+              'partisan_rto',
+              'liwc_work_rto',
+              'presup_rto',
+              'hedge_rto',
+              'assertive_rto',
+              'opinion_rto']
+
+
+def feature_vector(features):
     """Extract the features into a vector in the right order, prepends a 1 for constant term."""
-    l = [1]
-    l.extend(features[k] for k in modelkeys)
-    return l
+    v = [1]
+    v.extend(features[k] for k in model_keys)
+    return v
+
 
 def normalized_features(features):
     """Normalize the features by dividing by the coefficient."""
-    beta = modelbeta
-    fvec = featurevector(features)
-    norm = lambda i: fvec[i]/modelbeta[i]
-    return [norm(i) for i in range(len(modelbeta))]
+    fvec = feature_vector(features)
+    norm = lambda i: fvec[i]/model_beta[i]
+    return [norm(i) for i in range(len(model_beta))]
+
 
 def compute_bias(sentence_text):
     """run the trained regression coefficients against the feature dict"""
     features = extract_bias_features(sentence_text)
-    coord = featurevector(features)
-    bs_score = sum(modelbeta[i]*coord[i] for i in range(len(modelkeys)))
+    coord = feature_vector(features)
+    bs_score = sum(model_beta[i]*coord[i] for i in range(len(model_keys)))
     return bs_score
 
 
 @contextmanager
-def poolcontext(*args, **kwargs):
-    """poolcontext makes it easier to run a function with a process Pool.
+def pool_context(*args, **kwargs):
+    """pool_context makes it easier to run a function with a process Pool.
 
     Example:
 
-            with poolcontext(processes=n_jobs) as pool:
+            with pool_context(processes=n_jobs) as pool:
                 bs_scores = pool.map(compute_bias, sentences)
                 avg_bias = sum(bs_scores)
     """
@@ -498,7 +495,7 @@ def poolcontext(*args, **kwargs):
     pool.terminate()
 
 
-def roundmean(avg_bias, sentences, k=4):
+def round_mean(avg_bias, sentences, k=4):
     """Compute the average and round to k places"""
     avg_bias = round(float(avg_bias) / float(len(sentences)), k)
     return avg_bias
@@ -512,19 +509,19 @@ def compute_avg_statement_bias_mp(statements_list_or_str, n_jobs=1):
         if isinstance(statements_list_or_str, str):
             sentences.extend(split_into_sentences(statements_list_or_str))
         else:
-            logmessage = "-- Expecting type(list) or type(str); type({}) given".format(type(statements_list_or_str))
-            print(logmessage)
+            log_message = "-- Expecting type(list) or type(str); type({}) given".format(type(statements_list_or_str))
+            print(log_message)
     # max_len = max(map(len, sentences))
 
     if len(sentences) == 0:
         return 0
 
-    with poolcontext(processes=n_jobs) as pool:
+    with pool_context(processes=n_jobs) as pool:
         bs_scores = pool.map(compute_bias, sentences)
         total_bias = sum(bs_scores)
 
     if len(sentences) > 0:
-        avg_bias = roundmean(total_bias, sentences)
+        avg_bias = round_mean(total_bias, sentences)
     else:
         avg_bias = 0
 
@@ -540,8 +537,8 @@ def compute_avg_statement_bias(statements_list_or_str):
         if isinstance(statements_list_or_str, str):
             sentences.extend(split_into_sentences(statements_list_or_str))
         else:
-            logmessage = "-- Expecting type(list) or type(str); type({}) given".format(type(statements_list_or_str))
-            print(logmessage)
+            log_message = "-- Expecting type(list) or type(str); type({}) given".format(type(statements_list_or_str))
+            print(log_message)
 
     # max_len = max(map(len, sentences))
 
@@ -555,7 +552,7 @@ def compute_avg_statement_bias(statements_list_or_str):
     total_bias = sum(bs_scores)
 
     if len(sentences) > 0:
-        avg_bias = roundmean(total_bias, sentences)
+        avg_bias = round_mean(total_bias, sentences)
     else:
         avg_bias = 0
 

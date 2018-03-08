@@ -1,17 +1,10 @@
+from pip.req import parse_requirements
 from setuptools import setup, find_packages
+from setuptools.command.install import install
 
 package = 'bsdetector'
 version = '0.1'
-from setuptools import setup
-from setuptools.command.develop import develop
-from setuptools.command.install import install
 
-
-# class PostDevelopCommand(develop):
-#     """Post-installation for development mode."""
-#     def run(self):
-#         # PUT YOUR POST-INSTALL SCRIPT HERE or CALL A FUNCTION
-#         develop.run(self)
 
 class PostInstallCommand(install):
     """Post-installation for installation mode."""
@@ -21,20 +14,21 @@ class PostInstallCommand(install):
         nltk.download('punkt')
         install.run(self)
 
+
+install_reqs = parse_requirements('requirements.txt', session=False)
+reqs = [str(ir.req) for ir in install_reqs]
+
 print(find_packages('bsdetector'))
 setup(name=package,
       version=version,
-      packages=['bsdetector', 'lexicons', 'additional_resources'],
-      install_requires=['decorator', 'requests', 'textstat', 'vaderSentiment',
-                        'pattern', 'nltk', 'pytest'],
+      # packages=['bsdetector', 'lexicons', 'additional_resources'],
+      packages=['bsdetector'],
+      install_requires=reqs,
       package_dir={'bsdetector': 'bsdetector'},
-      # data_files=[('bsdetector', ['bsdetector/lexicon.json'])],
       package_data={'bsdetector': ['*.json']},
       description="Detects biased statements in online media documents",
       url='url',
       cmdclass={
-          # 'develop': PostDevelopCommand,
           'install': PostInstallCommand,
       }
-)
-
+      )

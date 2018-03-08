@@ -1,6 +1,12 @@
 language: python
 python:
-  - "2.7"
+  - "3.6"
+
+before_install:
+  - git clone -b development https://github.com/clips/pattern.git
+  - pushd pattern
+  - python setup.py install
+  - popd
 
 # command to install dependencies
 install:
@@ -8,4 +14,4 @@ install:
 
 # command to run tests
 script:
-  - pytest 
+  - pytest test/

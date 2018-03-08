@@ -1,7 +1,8 @@
-pytest
-vaderSentiment
-pattern
-nltk
 decorators
+flask
+nltk
 requests
+pip
+pytest
 textstat
+vaderSentiment
