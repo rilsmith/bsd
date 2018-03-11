@@ -1,8 +1,14 @@
+dash
+dash_renderer
+dash-html-components
+dash-core-components
 decorators
 flask
 nltk
 requests
+pandas
 pip
+plotly
 pytest
 textstat
 vaderSentiment
